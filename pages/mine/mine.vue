@@ -184,9 +184,46 @@
 				return currentValue / (currentValue + needValue) * 100
 			}
 		},
-		onLoad() {
+		async onLoad() {
+			await this.loadMemberInfo()
+		},
+		async onShow() {
+			// 每次显示页面时刷新会员信息
+			await this.loadMemberInfo()
 		},
 		methods: {
+			/**
+			 * loadMemberInfo - 加载会员信息
+			 */
+			async loadMemberInfo() {
+				if (!this.isLogin) return
+
+				try {
+					const data = await this.$api('member')
+					console.log('[会员] 信息:', data)
+
+					if (data) {
+						// 更新 Vuex store
+						this.$store.commit('SET_MEMBER', {
+							customerId: data.customerId,
+							nickname: data.nickname || '',
+							avatar: data.avatar || '',
+							mobilePhone: data.mobilePhone || '',
+							gender: data.gender,
+							memberLevel: data.memberLevel || data.level || 1,
+							pointNum: data.pointNum || 0,
+							couponNum: data.couponNum || 0,
+							balance: data.balance || 0,
+							giftBalance: data.giftBalance || 0,
+							currentValue: data.currentValue || 0,
+							needValue: data.needValue || 0,
+							birthday: data.birthday || ''
+						})
+					}
+				} catch (err) {
+					console.error('[会员] 信息加载失败:', err)
+				}
+			},
 			login() {
 				uni.navigateTo({
 					url: '/pages/login/login'

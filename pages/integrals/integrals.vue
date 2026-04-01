@@ -88,31 +88,69 @@
 		},
 		methods: {
 			async getStepsOptions() {
-				let stepsOptions = []
-				
-				const attendance = await this.$api('attendance')
-				
-				attendance.forEach((item, index) => {
-					if(item.is_day) {
-						this.activeDay = index
-					}
-					
-					let arr = {
-						title: item.day_name + '天',
-						desc: '+' + item.points
-					}
-					if(index == attendance.length - 1) {
-						arr.circle = '/static/images/integrals/goal.png'
-						arr.circleStyle = 'width: 47rpx; height: 39rpx;'
-					}
-					
-					stepsOptions.push(arr)
-				})
-				
-				this.stepsOption = stepsOptions
+				try {
+					let stepsOptions = []
+
+					const attendance = await this.$api('attendance')
+					console.log('[签到规则] 获取成功:', attendance)
+
+					// 转换后端数据格式
+					const attendanceList = Array.isArray(attendance) ? attendance : []
+
+					attendanceList.forEach((item, index) => {
+						if(item.isDay || item.is_day) {
+							this.activeDay = index
+						}
+
+						let arr = {
+							title: (item.dayName || item.day_name || item.day) + '天',
+							desc: '+' + (item.points || 0)
+						}
+						if(index == attendanceList.length - 1) {
+							arr.circle = '/static/images/integrals/goal.png'
+							arr.circleStyle = 'width: 47rpx; height: 39rpx;'
+						}
+
+						stepsOptions.push(arr)
+					})
+
+					this.stepsOption = stepsOptions
+				} catch (err) {
+					console.error('[签到规则] 获取失败:', err)
+				}
 			},
 			async getPointsMall() {
-				this.pointsMall = await this.$api('pointsMall')
+				try {
+					const data = await this.$api('pointsMall')
+					console.log('[积分商城] 获取成功:', data)
+
+					// 转换后端数据格式到前端需要的格式
+					if (Array.isArray(data)) {
+						const grouped = {}
+						data.forEach(item => {
+							const cate = item.categoryName || item.category || '默认分类'
+							if (!grouped[cate]) {
+								grouped[cate] = []
+							}
+							grouped[cate].push({
+								id: item.id,
+								goods_name: item.goodsName || item.name || '',
+								points_price: item.pointsPrice || 0,
+								amount: item.amount || 0,
+								goods_stock: item.goodsStock || 0,
+								img: item.images || item.imageUrl || ['/static/images/integrals/ticket.png']
+							})
+						})
+						this.pointsMall = grouped
+					} else {
+						this.pointsMall = {}
+					}
+
+					console.log('[积分商城] 转换后:', this.pointsMall)
+				} catch (err) {
+					console.error('[积分商城] 获取失败:', err)
+					this.pointsMall = {}
+				}
 			},
 			attendance() {
 				uni.navigateTo({

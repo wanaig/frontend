@@ -187,8 +187,8 @@
 	import {mapState, mapMutations} from 'vuex'
 	import listCell from '@/components/list-cell/list-cell'
 	import modal from '@/components/modal/modal'
-	import orders from '@/api/orders'
-	
+	import {postApi} from '@/api/index.js'
+
 	export default {
 		components: {
 			listCell,
@@ -242,16 +242,46 @@
 				}
 			},
 			pay() {
-				uni.showLoading({title: '加载中'})
-				//测试订单
-				let order = this.orderType == 'takein' ? orders[0] : orders[1]
-				order = Object.assign(order, {status: 1})
-				this.SET_ORDER(order)
-				uni.removeStorageSync('cart')
-				uni.reLaunch({
-					url: '/pages/take-foods/take-foods'
+				uni.showLoading({ title: '创建订单中...' })
+
+				// 构建订单数据
+				const orderData = {
+					storeId: this.store.id,
+					typeCate: this.orderType === 'takein' ? 1 : 2,
+					addressId: this.address.id || null,
+					remark: this.form.remark || '',
+					goodsList: this.cart.map(item => ({
+						goodsId: item.id,
+						number: item.number,
+						property: item.props_text || ''
+					}))
+				}
+				console.log('[支付] 创建订单:', orderData)
+
+				// 调用后端创建订单接口
+				postApi('order.create', orderData).then(res => {
+					console.log('[支付] 订单创建成功:', res)
+					uni.hideLoading()
+					uni.showToast({
+						title: '付款成功',
+						icon: 'success'
+					})
+					// 清除购物车
+					uni.removeStorageSync('cart')
+					// 跳转到取餐页面
+					setTimeout(() => {
+						uni.reLaunch({
+							url: '/pages/take-foods/take-foods'
+						})
+					}, 1500)
+				}).catch(err => {
+					console.error('[支付] 订单创建失败:', err)
+					uni.hideLoading()
+					uni.showToast({
+						title: '订单创建失败',
+						icon: 'none'
+					})
 				})
-				uni.hideLoading()
 			}
 		}
 	}

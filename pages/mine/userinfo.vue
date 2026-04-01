@@ -77,16 +77,52 @@
 				return this.getDate('end');
 			}
 		},
-		onLoad() {
-			this.member = this.$store.state.member
+		async onLoad() {
+			await this.loadMemberInfo()
 		},
 		methods: {
+			/**
+			 * loadMemberInfo - 加载会员信息
+			 */
+			async loadMemberInfo() {
+				try {
+					uni.showLoading({ title: '加载中...' })
+
+					const data = await this.$api('member')
+					console.log('[会员] 信息:', data)
+
+					if (data) {
+						this.member = {
+							customerId: data.customerId,
+							nickname: data.nickname || '',
+							avatar: data.avatar || '',
+							mobilePhone: data.mobilePhone || '',
+							gender: data.gender == 0 ? '2' : (data.gender == 1 ? '1' : '1'),
+							birthday: data.birthday || '',
+							memberLevel: data.memberLevel || data.level || 1,
+							pointNum: data.pointNum || 0,
+							couponNum: data.couponNum || 0,
+							balance: data.balance || 0,
+							giftBalance: data.giftBalance || 0,
+							currentValue: data.currentValue || 0,
+							needValue: data.needValue || 0,
+							openingCardDate: data.openingCardDate || ''
+						}
+					}
+
+					uni.hideLoading()
+				} catch (err) {
+					console.error('[会员] 信息加载失败:', err)
+					uni.hideLoading()
+				}
+			},
+
 			getDate(type) {
 				const date = new Date();
 				let year = date.getFullYear();
 				let month = date.getMonth() + 1;
 				let day = date.getDate();
-	
+
 				if (type === 'start') {
 					year = year - 60;
 				} else if (type === 'end') {
@@ -99,10 +135,70 @@
 			handleDateChange(e) {
 				this.member.birthday = e.target.value
 			},
-			save() {
-				const member = Object.assign(this.$store.state.member, this.member)
-				this.$store.commit('SET_MEMBER', member)
-				uni.navigateBack()
+
+			/**
+			 * save - 保存会员信息
+			 */
+			async save() {
+				// 表单验证
+				if (!this.member.nickname) {
+					uni.showToast({ title: '请输入昵称', icon: 'none' })
+					return
+				}
+
+				try {
+					uni.showLoading({ title: '保存中...' })
+
+					// 转换性别格式：前端1=先生,2=女士 → 后端1=男,0=女
+					const gender = this.member.gender == '1' ? 1 : 0
+
+					// 获取 token
+					const token = uni.getStorageSync('auth_token')
+					console.log('[会员] Token:', token)
+
+					// 直接使用 uni.request 发送 PUT 请求
+					const response = await uni.request({
+						url: 'http://192.168.46.107:8080/api/member/info',
+						method: 'PUT',
+						header: {
+							'Authorization': token ? `Bearer ${token}` : '',
+							'Content-Type': 'application/json'
+						},
+						data: {
+							nickname: this.member.nickname,
+							gender: gender,
+							birthday: this.member.birthday
+						}
+					})
+
+					console.log('[会员] 更新响应:', JSON.stringify(response, null, 2))
+
+					uni.hideLoading()
+
+					// 提取响应数据
+					const result = response.data
+					console.log('[会员] result:', result)
+					console.log('[会员] result.code:', result && result.code)
+
+					// 判断是否成功
+					if (result && result.code === 0) {
+						uni.showToast({ title: '保存成功', icon: 'success' })
+						setTimeout(() => {
+							uni.navigateBack()
+						}, 1500)
+					} else if (result) {
+						uni.showToast({ title: result.message || '保存失败', icon: 'none' })
+					} else {
+						uni.showToast({ title: '保存成功', icon: 'success' })
+						setTimeout(() => {
+							uni.navigateBack()
+						}, 1500)
+					}
+				} catch (err) {
+					console.error('[会员] 保存失败:', err)
+					uni.hideLoading()
+					uni.showToast({ title: '保存失败', icon: 'none' })
+				}
 			}
 		}
 	}

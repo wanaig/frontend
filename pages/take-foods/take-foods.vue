@@ -1,6 +1,9 @@
 <template>
 	<view class="container">
-		<view v-if="!Object.keys(order).length" class="d-flex w-100 h-100 flex-column just-content-center align-items-center">
+		<view v-if="loading" class="d-flex w-100 h-100 flex-column just-content-center align-items-center">
+			<image src="/static/images/loading.gif" class="drinks-img"></image>
+		</view>
+		<view v-else-if="!orders.length" class="d-flex w-100 h-100 flex-column just-content-center align-items-center">
 			<image src="/static/images/loading.gif" class="drinks-img"></image>
 			<view class="tips d-flex flex-column align-items-center font-size-base text-color-assist">
 				<view>您还没有点单</view>
@@ -11,7 +14,7 @@
 		</view>
 		<template v-else>
 			<view class="order-box">
-				<view class="bg-white">
+				<view class="bg-white" v-for="(order, orderIndex) in orders" :key="orderIndex">
 					<view class="section">
 						<!-- store info begin -->
 						<list-cell :hover="false">
@@ -29,7 +32,7 @@
 						<list-cell :hover="false" padding="50rpx 30rpx">
 							<view class="w-100 d-flex flex-column">
 								<view class="d-flex align-items-center just-content-center" v-if="order.typeCate == 1">
-									<view class="sort-num">{{ order.sort_num }}</view>
+									<view class="sort-num">{{ order.sortNum }}</view>
 								</view>
 								<!-- steps begin -->
 								<view class="d-flex just-content-center">
@@ -79,9 +82,6 @@
 									</view>
 								</view>
 								<!-- steps end -->
-								<view v-if="order.status<=1" class="d-flex just-content-center align-items-center font-size-base text-color-assist mb-40">
-									您前面还有 <text class="text-color-primary mr-10 ml-10">4</text> 单待制作
-								</view>
 								<!-- goods begin -->
 								<view class="w-100 d-flex flex-column position-relative mt-30" style="margin-bottom: -40rpx;">
 									<view class="w-100 d-flex align-items-center mb-40" v-for="(good, index) in order.goods" :key="index">
@@ -105,7 +105,7 @@
 							<view class="w-100 d-flex flex-column">
 								<view class="pay-cell">
 									<view>支付方式</view>
-									<view class="font-weight-bold">{{ order.pay_mode }}</view>
+									<view class="font-weight-bold">{{ order.payMode }}</view>
 								</view>
 								<view class="pay-cell">
 									<view>金额总计</view>
@@ -121,7 +121,7 @@
 							<view class="w-100 d-flex flex-column">
 								<view class="pay-cell">
 									<view>下单时间</view>
-									<view class="font-weight-bold">{{ $util.formatDateTime(order.created_at) }}</view>
+									<view class="font-weight-bold">{{ formatDateTime(order.createdAt) }}</view>
 								</view>
 								<view class="pay-cell">
 									<view>下单门店</view>
@@ -129,11 +129,11 @@
 								</view>
 								<view class="pay-cell">
 									<view>支付方式</view>
-									<view class="font-weight-bold">{{ order.pay_mode }}</view>
+									<view class="font-weight-bold">{{ order.payMode }}</view>
 								</view>
 								<view class="pay-cell">
 									<view>订单号</view>
-									<view class="font-weight-bold">{{ order.order_no }}</view>
+									<view class="font-weight-bold">{{ order.orderNo }}</view>
 								</view>
 							</view>
 						</list-cell>
@@ -144,11 +144,11 @@
 						<view class="w-100 d-flex flex-column">
 							<view class="pay-cell">
 								<view>取单号</view>
-								<view class="font-weight-bold">{{ order.sort_num }}</view>
+								<view class="font-weight-bold">{{ order.sortNum }}</view>
 							</view>
 							<view class="pay-cell">
 								<view>享用方式</view>
-								<view class="font-weight-bold">自取</view>
+								<view class="font-weight-bold">{{ order.typeCate == 1 ? '自取' : '外卖' }}</view>
 							</view>
 							<view class="pay-cell">
 								<view>取餐时间</view>
@@ -156,11 +156,11 @@
 							</view>
 							<view class="pay-cell">
 								<view>完成制作时间</view>
-								<view class="font-weight-bold">{{ order.productioned_time }}</view>
+								<view class="font-weight-bold">{{ order.productionedTime || '制作中' }}</view>
 							</view>
 							<view class="pay-cell">
 								<view>备注</view>
-								<view class="font-weight-bold">{{ order.postscript }}</view>
+								<view class="font-weight-bold">{{ order.postscript || '无' }}</view>
 							</view>
 						</view>
 					</list-cell>
@@ -174,20 +174,97 @@
 <script>
 	import listCell from '@/components/list-cell/list-cell'
 	import {mapState} from 'vuex'
-	
+
 	export default {
 		components: {
 			listCell
 		},
 		data() {
 			return {
-				
+				loading: true,
+				orders: []
 			}
 		},
 		computed: {
-			...mapState(['order'])
+			...mapState(['order', 'orderType', 'address', 'store'])
+		},
+		async onLoad() {
+			await this.loadCurrentOrder()
+		},
+		async onShow() {
+			// 每次显示页面时刷新订单状态
+			if (!this.loading) {
+				await this.loadCurrentOrder()
+			}
 		},
 		methods: {
+			/**
+			 * loadCurrentOrder - 获取当前有效订单
+			 */
+			async loadCurrentOrder() {
+				try {
+					this.loading = true
+					console.log('[取餐] 正在加载订单...')
+
+					// 调用后端订单列表接口
+					const data = await this.$api('orders')
+					console.log('[取餐] 订单列表:', data)
+
+					// 获取所有有效订单（status < 4 表示未完成）
+					if (Array.isArray(data) && data.length > 0) {
+						// 按创建时间倒序
+						const sortedOrders = data.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+						// 筛选有效订单
+						const activeOrders = sortedOrders.filter(o => o.status < 4)
+						// 转换后端数据格式到前端格式
+						this.orders = activeOrders.map(activeOrder => ({
+							id: activeOrder.id,
+							orderNo: activeOrder.orderNo,
+							status: activeOrder.status,
+							statusText: activeOrder.statusText,
+							totalAmount: activeOrder.totalAmount,
+							amount: activeOrder.amount,
+							payMode: activeOrder.payMode || '微信支付',
+							createdAt: activeOrder.createdAt,
+							productionedTime: activeOrder.productionedTime,
+							postscript: activeOrder.postscript,
+							sortNum: activeOrder.sortNum,
+							typeCate: activeOrder.typeCate,
+							store: activeOrder.store || {},
+							goods: (activeOrder.goods || []).map(g => ({
+								name: g.name,
+								number: g.number,
+								price: g.price,
+								property: g.property || ''
+							}))
+						}))
+						console.log('[取餐] 有效订单列表:', this.orders)
+					} else {
+						this.orders = []
+					}
+				} catch (err) {
+					console.error('[取餐] 加载失败:', err)
+					this.orders = []
+				} finally {
+					this.loading = false
+				}
+			},
+
+			/**
+			 * formatDateTime - 格式化时间戳
+			 */
+			formatDateTime(timestamp) {
+				if (!timestamp) return ''
+				const date = new Date(timestamp * 1000)
+				const year = date.getFullYear()
+				const month = String(date.getMonth() + 1).padStart(2, '0')
+				const day = String(date.getDate()).padStart(2, '0')
+				const hour = String(date.getHours()).padStart(2, '0')
+				const minute = String(date.getMinutes()).padStart(2, '0')
+				const second = String(date.getSeconds()).padStart(2, '0')
+				return `${year}-${month}-${day} ${hour}:${minute}:${second}`
+			},
+
 			orders() {
 				if(!this.$store.getters.isLogin) {
 					uni.navigateTo({url: '/pages/login/login'})

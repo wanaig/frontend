@@ -81,7 +81,7 @@ const MOCK_MODE = false  // ⚠️ 联调测试时改为 false
  *   如果提示域名不合法，在「详情」→「本地设置」中勾选
  *   「不校验合法域名、web-view（业务域名）、TLS 版本以及 HTTPS 证书」
  */
-const BASE_URL = 'http://localhost:8080/api'
+const BASE_URL = 'http://192.168.46.107:8080/api'
 
 /**
  * Storage Keys - 本地存储的 Key 名称

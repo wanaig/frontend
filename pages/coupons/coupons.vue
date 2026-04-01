@@ -2,8 +2,8 @@
 	<view class="container position-relative w-100 h-100 overflow-hidden">
 		<view class="exchange-box">
 			<view class="input-box">
-				<input type="text" placeholder="请输入兑换码" placeholder-class="text-color-assist font-size-base" />
-				<button type="primary">兑换</button>
+				<input type="text" v-model="exchangeCode" placeholder="请输入兑换码" placeholder-class="text-color-assist font-size-base" />
+				<button type="primary" @tap="exchangeCoupon">兑换</button>
 			</view>
 			<view class="font-size-sm text-color-primary line-height-2">查看兑换规则</view>
 		</view>
@@ -53,6 +53,7 @@
 
 <script>
 import modal from '@/components/modal/modal'
+import {postApi} from '@/api/index.js'
 
 export default {
 	components: {
@@ -65,15 +66,19 @@ export default {
 				{title: '茶饮券', value: '1'},
 				{title: '酒屋券', value: '2'}
 			],
-			activeTabIndex: '',
+			activeTabIndex: 0,
 			coupons: [],
 			detailModalVisible: false,
 			coupon: {},
-			couponExplainHtml: ''
+			couponExplainHtml: '',
+			exchangeCode: ''
 		}
 	},
-	onShow() {
-		this.activeTabIndex = 0
+	async onLoad() {
+		await this.getCoupons('all')
+	},
+	async onShow() {
+		await this.getCoupons('all')
 	},
 	watch: {
 		activeTabIndex: async function(val) {
@@ -86,13 +91,61 @@ export default {
 			this.activeTabIndex = index
 		},
 		async getCoupons(type) {
-			const coupons = await this.$api('customerCoupons')
-			if(type == 'all') {
-				this.coupons = coupons
-			} else {
-				this.coupons = coupons.filter(item => item.couponType == type)
+			try {
+				const data = await this.$api('customerCoupons')
+				console.log('[优惠券] 获取成功:', data)
+
+				// 转换后端数据格式到前端格式
+				const coupons = Array.isArray(data) ? data : (data.list || [])
+				const transformedCoupons = coupons.map(coupon => ({
+					id: coupon.id,
+					couponId: coupon.couponId,
+					title: coupon.title,
+					couponExplain: coupon.couponExplain,
+					imageUrl: coupon.imageUrl || '',
+					discountAmount: coupon.discountAmount,
+					discountUnit: coupon.discountUnit,
+					beginAt: coupon.beginAt,
+					endAt: coupon.endAt,
+					couponType: coupon.couponType,
+					sellerName: coupon.sellerName
+				}))
+
+				console.log('[优惠券] 转换后:', transformedCoupons)
+
+				if (type == 'all') {
+					this.coupons = transformedCoupons
+				} else {
+					this.coupons = transformedCoupons.filter(item => item.couponType == type)
+				}
+			} catch (err) {
+				console.error('[优惠券] 获取失败:', err)
+				this.coupons = []
 			}
 		},
+
+		/**
+		 * exchangeCoupon - 兑换优惠券
+		 */
+		async exchangeCoupon() {
+			if (!this.exchangeCode) {
+				uni.showToast({ title: '请输入兑换码', icon: 'none' })
+				return
+			}
+			try {
+				uni.showLoading({ title: '兑换中...' })
+				await postApi('coupon.exchange', { code: this.exchangeCode })
+				uni.hideLoading()
+				uni.showToast({ title: '兑换成功', icon: 'success' })
+				this.exchangeCode = ''
+				// 刷新优惠券列表
+				await this.getCoupons(this.tabs[this.activeTabIndex].value)
+			} catch (err) {
+				uni.hideLoading()
+				console.error('[优惠券] 兑换失败:', err)
+			}
+		},
+
 		openDetailModal(coupon) {
 			this.coupon = coupon
 			this.couponExplainHtml = this.coupon.couponExplain || ''
