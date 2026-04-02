@@ -2,10 +2,10 @@
 	<view class="container">
 		<view class="position-relative">
 			<image src="https://img-shop.qmimg.cn/s16/images/2020/01/20/9a82219bedcae5c2.jpeg" class="bg"></image>
-			<button type="default" size="mini" class="hym-btn" @tap="memberCode">
+			<!-- <button type="default" size="mini" class="hym-btn" @tap="memberCode">
 				<image src="/static/images/mine/hym.png"></image>
 				<text>会员码</text>
-			</button>
+			</button> -->
 		</view>
 		
 		<view style="padding: 0 30rpx;">
@@ -27,21 +27,21 @@
 							<view class="iconfont iconarrow-right line-height-100"></view>
 						</view>
 						<view v-else class="font-size-lg font-weight-bold" @tap="login">请点击授权登录</view>
-						<view class="font-size-sm text-color-assist">
+						<!-- <view class="font-size-sm text-color-assist">
 							当前成长值{{ isLogin ? member.currentValue : 0 }}/{{ isLogin ? member.currentValue + member.needValue : 0 }}
 						</view>
 						<view class="w-100">
 							 <progress percent="0" activeColor="#ADB838" height="8rpx" :percent="growthValue" border-radius="8rpx"/>
-						</view>
+						</view> -->
 					</view>
-					<view class="level-benefit d-flex flex-shrink-0 align-items-center justify-content-end text-color-white bg-warning font-size-sm">
+					<!-- <view class="level-benefit d-flex flex-shrink-0 align-items-center justify-content-end text-color-white bg-warning font-size-sm">
 						<view>会员权益</view>
 						<view class="iconfont iconarrow-right line-height-100"></view>
-					</view>
+					</view> -->
 				</view>
 				<!-- user grid begin -->
 				<view class="w-100 d-flex align-items-center just-content-center">
-					<view class="user-grid" @tap="coupons">
+					<!-- <view class="user-grid" @tap="coupons">
 						<view class="value font-size-extra-lg font-weight-bold text-color-base">
 							{{  isLogin ? member.couponNum : '***' }}
 						</view>
@@ -52,25 +52,25 @@
 							{{  isLogin ? member.pointNum : '***' }}
 						</view>
 						<view class="font-size-sm text-color-assist">积分商城</view>
-					</view>
+					</view> -->
 					<view class="user-grid" @tap="balance">
 						<view class="value font-size-extra-lg font-weight-bold text-color-base">
 							{{  isLogin ? member.balance : '***' }}
 						</view>
 						<view class="font-size-sm text-color-assist">余额</view>
 					</view>
-					<view class="user-grid" @tap="giftCards">
+					<!-- <view class="user-grid" @tap="giftCards">
 						<view class="value font-size-extra-lg font-weight-bold text-color-base">
 							{{  isLogin ? member.giftBalance : '***' }}
 						</view>
 						<view class="font-size-sm text-color-assist">礼品卡</view>
-					</view>
+					</view> -->
 				</view>
 				<!-- user grid end -->
 			</view>
 			<!-- user box end -->
 			<!-- level benefit box begin -->
-			<view class="level-benefit-box" v-if="!isLogin">
+			<!-- <view class="level-benefit-box" v-if="!isLogin">
 				<view class="d-flex align-items-center justify-content-between font-size-base">
 					<view class="text-color-base">新用户加入会员，享会员权益</view>
 					<view class="text-color-primary" @tap="login">立即加入</view>
@@ -97,7 +97,7 @@
 						<view>奈雪宝藏</view>
 					</view>
 				</view>
-			</view>
+			</view> -->
 			<!-- level benefit box end -->
 			<!-- banner begin -->
 			<image src="/static/images/mine/banner.png" class="banner" mode="widthFix"></image>
@@ -107,7 +107,7 @@
 		<view class="service-box">
 			<view class="font-size-lg text-color-base font-weight-bold" style="margin-bottom: 20rpx;">我的服务</view>
 			<view class="row">
-				<view class="grid" @tap="attendance">
+				<!-- <view class="grid" @tap="attendance">
 					<view class="image">
 						<image src="/static/images/mine/jfqd.png"></image>
 					</view>
@@ -131,7 +131,7 @@
 						<image src="/static/images/mine/lxkf.png"></image>
 					</view>
 					<view>联系客服</view>
-				</view>
+				</view> -->
 				<view class="grid" @tap="orders">
 					<view class="image">
 						<image src="/static/images/mine/wddd.png"></image>
@@ -150,12 +150,12 @@
 					</view>
 					<view>收货地址</view>
 				</view>
-				<view class="grid" @tap="services">
+				<!-- <view class="grid" @tap="services">
 					<view class="image">
 						<image src="/static/images/mine/gdfw.png"></image>
 					</view>
 					<view>更多服务</view>
-				</view>
+				</view> -->
 			</view>
 		</view>
 		<!-- service box end -->

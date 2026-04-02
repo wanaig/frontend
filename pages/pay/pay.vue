@@ -27,7 +27,7 @@
 						</view>
 					</list-cell>
 				</template>
-				<template v-if="orderType == 'takein'">
+				<!-- <template v-if="orderType == 'takein'">
 					<list-cell arrow class="meal-time">
 						<view class="flex-fill d-flex justify-content-between align-items-center">
 							<view class="title">取餐时间</view>
@@ -57,7 +57,7 @@
 							</view>
 						</view>
 					</list-cell>
-				</template>
+				</template> -->
 			</view>
 			<!-- 购物车列表 begin -->
 			<view class="section-2">
@@ -76,7 +76,7 @@
 								</view>
 							</view>
 							<view class="text-truncate font-size-base text-color-assist">
-								{{ item.props_text }}
+								{{ item.property || item.props_text || item.content }}
 							</view>
 						</view>
 					</list-cell>
@@ -95,7 +95,7 @@
 						</list-cell>
 					</template>
 				</view>
-				<list-cell arrow @click="goToPackages">
+				<!-- <list-cell arrow @click="goToPackages">
 					<view class="flex-fill d-flex justify-content-between align-items-center">
 						<view class="text-color-base">奈雪券</view>
 						<view class="text-color-primary">超值购买优惠券大礼包</view>
@@ -106,7 +106,7 @@
 						<view class="text-color-base">礼品卡</view>
 						<view class="text-color-primary">请选择</view>
 					</view>
-				</list-cell>
+				</list-cell> -->
 				<list-cell last>
 					<view class="flex-fill d-flex justify-content-end align-items-center">
 						<view>总计￥{{ total }},实付</view>
@@ -125,21 +125,21 @@
 				<list-cell last :hover="false">
 					<text>支付方式</text>
 				</list-cell>
-				<list-cell>
-					<view class="d-flex align-items-center justify-content-between w-100 disabled">
+				<list-cell @click="selectPayMode('balance')">
+					<view class="d-flex align-items-center justify-content-between w-100" :class="{'disabled': !balanceEnough}">
 						<view class="iconfont iconbalance line-height-100 payment-icon"></view>
-						<view class="flex-fill">余额支付（余额￥0）</view>
-						<view class="font-size-sm">余额不足</view>
-						<view class="iconfont iconradio-button-off line-height-100 checkbox"></view>
+						<view class="flex-fill">余额支付（余额￥{{ member.balance || 0 }}）</view>
+						<view class="font-size-sm" :class="{'text-color-assist': balanceEnough, 'text-color-warning': !balanceEnough}">{{ balanceEnough ? '可用' : '余额不足' }}</view>
+						<view class="iconfont line-height-100 checkbox" :class="payMode === 'balance' ? 'iconradio-button-on text-color-primary' : 'iconradio-button-off text-color-base'"></view>
 					</view>
 				</list-cell>
-				<list-cell last>
+				<!-- <list-cell last @click="selectPayMode('wechat')">
 					<view class="d-flex align-items-center justify-content-between w-100">
 						<view class="iconfont iconwxpay line-height-100 payment-icon" style="color: #7EB73A;"></view>
 						<view class="flex-fill">微信支付</view>
-						<view class="iconfont iconradio-button-on line-height-100 checkbox checked"></view>
+						<view class="iconfont line-height-100 checkbox" :class="payMode === 'wechat' ? 'iconradio-button-on text-color-primary' : 'iconradio-button-off text-color-base'"></view>
 					</view>
-				</list-cell>
+				</list-cell> -->
 			</view>
 			<!-- 支付方式 end -->
 			<!-- 备注 begin -->
@@ -184,10 +184,11 @@
 </template>
 
 <script>
+
 	import {mapState, mapMutations} from 'vuex'
 	import listCell from '@/components/list-cell/list-cell'
 	import modal from '@/components/modal/modal'
-	import {postApi} from '@/api/index.js'
+	import {postApi, putApi, getMemberInfo} from '@/api/index.js'
 
 	export default {
 		components: {
@@ -200,7 +201,9 @@
 				form: {
 					remark: ''
 				},
-				ensureAddressModalVisible: false
+				ensureAddressModalVisible: false,
+				member: {},
+				payMode: 'balance'
 			}
 		},
 		computed: {
@@ -210,12 +213,17 @@
 			},
 			amount() {
 				return this.cart.reduce((acc, cur) => acc + cur.number * cur.price, 0)
+			},
+			balanceEnough() {
+				return this.member.balance >= this.amount
 			}
 		},
-		onLoad(option) {
+		async onLoad(option) {
 			const {remark} = option
 			this.cart = uni.getStorageSync('cart')
+			console.log('[支付] cart:', this.cart)
 			remark && this.$set(this.form, 'remark', remark)
+			this.member = await getMemberInfo()
 		},
 		methods: {
 			...mapMutations(['SET_ORDER']),
@@ -234,6 +242,13 @@
 					url: '/pages/packages/index'
 				})
 			},
+			selectPayMode(mode) {
+				if (mode === 'balance' && !this.balanceEnough) {
+					uni.showToast({ title: '余额不足', icon: 'none' })
+					return
+				}
+				this.payMode = mode
+			},
 			submit() {
 				if(this.orderType == 'takeout') {
 					this.ensureAddressModalVisible = true
@@ -244,7 +259,6 @@
 			pay() {
 				uni.showLoading({ title: '创建订单中...' })
 
-				// 构建订单数据
 				const orderData = {
 					storeId: this.store.id,
 					typeCate: this.orderType === 'takein' ? 1 : 2,
@@ -253,34 +267,32 @@
 					goodsList: this.cart.map(item => ({
 						goodsId: item.id,
 						number: item.number,
-						property: item.props_text || ''
+						property: item.property || item.props_text || ''
 					}))
 				}
 				console.log('[支付] 创建订单:', orderData)
 
-				// 调用后端创建订单接口
-				postApi('order.create', orderData).then(res => {
+				postApi('order.create', orderData).then(async res => {
 					console.log('[支付] 订单创建成功:', res)
+					const orderId = res.order_id || res.id
+					if (!orderId) {
+						throw new Error('订单创建失败')
+					}
+
+					// 调用支付接口
+					const payMode = this.payMode === 'balance' ? '余额支付' : '微信支付'
+					await putApi('order.pay', orderId, { payMode })
+
 					uni.hideLoading()
-					uni.showToast({
-						title: '付款成功',
-						icon: 'success'
-					})
-					// 清除购物车
+					uni.showToast({ title: '付款成功', icon: 'success' })
 					uni.removeStorageSync('cart')
-					// 跳转到取餐页面
 					setTimeout(() => {
-						uni.reLaunch({
-							url: '/pages/take-foods/take-foods'
-						})
+						uni.reLaunch({ url: '/pages/take-foods/take-foods' })
 					}, 1500)
 				}).catch(err => {
 					console.error('[支付] 订单创建失败:', err)
 					uni.hideLoading()
-					uni.showToast({
-						title: '订单创建失败',
-						icon: 'none'
-					})
+					uni.showToast({ title: '余额不足', icon: 'none' })
 				})
 			}
 		}

@@ -12,8 +12,8 @@
 					<view class="form-input">
 						<view class="label">性别</view>
 						<view class="radio-group">
-							<view class="radio" :class="{'checked': form.sex == 0}" style="margin-right: 10rpx;" @tap="form.sex = 0">先生</view>
-							<view class="radio" :class="{'checked': form.sex == 1}" @tap="form.sex = 1">女士</view>
+							<view class="radio" :class="{'checked': form.sex == 1}" style="margin-right: 10rpx;" @tap="form.sex = 1">先生</view>
+							<view class="radio" :class="{'checked': form.sex == 0}" @tap="form.sex = 0">女士</view>
 						</view>
 					</view>
 				</list-cell>
@@ -46,6 +46,7 @@
 <script>
 	import listCell from '@/components/list-cell/list-cell'
 	import {postApi, putApi} from '@/api/index.js'
+	import {mapState, mapMutations} from 'vuex'
 
 	export default {
 		components: {
@@ -63,91 +64,66 @@
 				}
 			}
 		},
+		computed: {
+			...mapState(['address'])
+		},
 		async onLoad({id}) {
 			if (id) {
-				this.addressId = id
-				await this.loadAddress(id)
+				this.addressId = Number(id)
+				this.loadAddress()
 			}
 		},
 		methods: {
-			/**
-			 * loadAddress - 加载地址详情
-			 */
-			async loadAddress(id) {
-				try {
-					uni.showLoading({ title: '加载中...' })
-					// 获取地址详情
-					const data = await this.$api('order.detail', { id })
-					console.log('[地址] 详情:', data)
+			...mapMutations(['SET_ADDRESS']),
 
-					if (data) {
-						this.form = {
-							acceptName: data.acceptName || '',
-							sex: data.sex || 0,
-							mobile: data.mobile || '',
-							street: data.street || '',
-							doorNumber: data.doorNumber || ''
-						}
+			loadAddress() {
+				const addr = this.address
+				if (addr && addr.id == this.addressId) {
+					this.form = {
+						acceptName: addr.acceptName || '',
+						sex: addr.sex ?? 0,
+						mobile: addr.mobile || '',
+						street: addr.street || '',
+						doorNumber: addr.doorNumber || ''
 					}
-					uni.hideLoading()
-				} catch (err) {
-					console.error('[地址] 加载失败:', err)
-					uni.hideLoading()
 				}
 			},
 
-			/**
-			 * save - 保存地址（新增或更新）
-			 */
 			async save() {
-				// 表单验证
 				if (!this.form.acceptName) {
-					uni.showToast({ title: '请输入收货人', icon: 'none' })
-					return
+					return uni.showToast({ title: '请输入收货人', icon: 'none' })
 				}
 				if (!this.form.mobile) {
-					uni.showToast({ title: '请输入联系方式', icon: 'none' })
-					return
+					return uni.showToast({ title: '请输入联系方式', icon: 'none' })
 				}
 				if (!this.form.street) {
-					uni.showToast({ title: '请输入收货地址', icon: 'none' })
-					return
+					return uni.showToast({ title: '请输入收货地址', icon: 'none' })
+				}
+
+				uni.showLoading({ title: '保存中...' })
+
+				const addressData = {
+					acceptName: this.form.acceptName,
+					sex: this.form.sex,
+					mobile: this.form.mobile,
+					street: this.form.street,
+					doorNumber: this.form.doorNumber || '',
+					isDefault: 0
 				}
 
 				try {
-					uni.showLoading({ title: '保存中...' })
-
-					// 构建请求数据
-					const addressData = {
-						acceptName: this.form.acceptName,
-						sex: this.form.sex,
-						mobile: this.form.mobile,
-						street: this.form.street,
-						doorNumber: this.form.doorNumber || '',
-						isDefault: 0
-					}
-
-					console.log('[地址] 保存:', addressData)
-
 					if (this.addressId) {
-						// 更新地址
 						await putApi('address.update', this.addressId, addressData)
-						console.log('[地址] 更新成功')
 					} else {
-						// 新增地址
 						await postApi('address.create', addressData)
-						console.log('[地址] 新增成功')
 					}
 
 					uni.hideLoading()
 					uni.showToast({ title: '保存成功', icon: 'success' })
+					this.SET_ADDRESS({})
 
-					// 返回上一页
-					setTimeout(() => {
-						uni.navigateBack()
-					}, 1500)
+					setTimeout(() => uni.navigateBack(), 1500)
 				} catch (err) {
-					console.error('[地址] 保存失败:', err)
 					uni.hideLoading()
 					uni.showToast({ title: '保存失败', icon: 'none' })
 				}

@@ -6,7 +6,7 @@
 			<view class="balance-info d-flex justify-content-between">
 				<view class="flex-fill d-flex flex-column align-items-between justify-content-between">
 					<view class="font-size-sm text-color-base">账户余额（元）</view>
-					<view class="font-size-extra-lg text-color-base font-weight-bold">0</view>
+					<view class="font-size-extra-lg text-color-base font-weight-bold">{{ member.balance || 0 }}</view>
 					<view class="font-size-sm text-color-primary">交易记录</view>
 				</view>
 				<image src="/static/images/balance.png"  mode="widthFix"></image>
@@ -26,7 +26,8 @@
 			<template v-if="rechargeCard">
 				<view class="font-size-lg text-color-base font-weight-bold" style="margin-bottom: 20rpx;">使用说明</view>
 				<view class="pre-line font-size-sm text-color-assist">
-					{{ rechargeCard.desc }}
+					<!-- {{ rechargeCard.desc }} -->
+					  解释权由我所有
 				</view>
 			</template>
 			
@@ -38,7 +39,7 @@
 					<view class="text-color-base">我已阅读并同意</view>
 					<view class="text-color-primary">《储值协议》</view>
 				</view>
-				<button type="primary" class="b">购买</button>
+				<button type="primary" class="b" @tap="doRecharge">购买</button>
 			</view>
 			<!-- bottom box end -->
 			
@@ -48,15 +49,19 @@
 </template>
 
 <script>
+	import {getRechargeCardList, recharge, getMemberInfo} from '@/api/index.js'
+
 	export default {
 		data() {
 			return {
 				agree: false,
-				amounts: []
+				amounts: [],
+				member: {}
 			}
 		},
 		async onLoad() {
-			this.amounts = await this.$api('rechargeCards')
+			this.amounts = await getRechargeCardList()
+			this.member = await getMemberInfo()
 		},
 		computed: {
 			rechargeCard() {
@@ -67,6 +72,29 @@
 			handleSelected(index) {
 				this.amounts.forEach(item => this.$set(item, 'selected', false))
 				this.$set(this.amounts[index], 'selected', true)
+			},
+			async doRecharge() {
+				if (!this.agree) {
+					return uni.showToast({ title: '请阅读并同意储值协议', icon: 'none' })
+				}
+				const selectedCard = this.rechargeCard
+				if (!selectedCard) {
+					return uni.showToast({ title: '请选择储值金额', icon: 'none' })
+				}
+
+				uni.showLoading({ title: '创建订单中...' })
+
+				try {
+					await recharge(selectedCard.id, selectedCard.value, 'wechat')
+					uni.hideLoading()
+					uni.showToast({ title: '储值成功', icon: 'success' })
+					setTimeout(() => {
+						uni.navigateBack()
+					}, 1500)
+				} catch (err) {
+					uni.hideLoading()
+					uni.showToast({ title: '储值失败', icon: 'none' })
+				}
 			}
 		}
 	}

@@ -47,7 +47,8 @@
 
 <script>
 	import listCell from '@/components/list-cell/list-cell'
-	
+	import { getOrderList } from '@/api/index'
+
 	export default {
 		components: {
 			listCell
@@ -56,7 +57,8 @@
 			return {
 				page: 1,
 				pageSize: 5,
-				orders: []
+				orders: [],
+				hasMore: true
 			}
 		},
 		computed: {
@@ -72,31 +74,44 @@
 			if(!this.$store.getters.isLogin) {
 				uni.navigateTo({url: '/pages/login/login'})
 			}
-			await this.getOrders(false)
+			await this.getOrders(true)
 		},
 		async onReachBottom() {
-			await this.getOrders(false)
+			if(this.hasMore) {
+				await this.getOrders(false)
+			}
 		},
 		async onPullDownRefresh() {
 			await this.getOrders(true)
+			uni.stopPullDownRefresh()
 		},
 		methods: {
 			async getOrders(isRefresh = false) {
-				uni.showLoading({
-					title: '加载中'
-				})
-				
-				let orders = await this.$api('orders')
-				if(isRefresh) {
-					this.orders = []
-					this.page = 1
+				uni.showLoading({ title: '加载中' })
+
+				try {
+					if(isRefresh) {
+						this.orders = []
+						this.page = 1
+						this.hasMore = true
+					}
+
+					const orders = await getOrderList({
+						page: this.page,
+						page_size: this.pageSize
+					})
+
+					if(orders && orders.length > 0) {
+						this.orders = this.orders.concat(orders)
+						this.page += 1
+						this.hasMore = orders.length >= this.pageSize
+					} else {
+						this.hasMore = false
+					}
+				} catch (e) {
+					console.error('获取订单失败:', e)
 				}
-				orders = orders.slice(this.pageSize * (this.page - 1), this.pageSize * this.page)
-				if(orders.length) {
-					this.orders = this.orders.concat(orders)
-					this.page += 1
-				}
-				
+
 				uni.hideLoading()
 			},
 			detail(id) {

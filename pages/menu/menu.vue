@@ -8,10 +8,10 @@
 							<text>{{ store.name }}</text>
 							<view class="iconfont iconarrow-right"></view>
 						</view>
-						<view class="store-location">
+						<!-- <view class="store-location">
 							<image src='/static/images/order/location.png' style="width: 30rpx; height: 30rpx;" class="mr-10"></image>
 							<text>距离您 {{ store.distance_text }}</text>
-						</view>
+						</view> -->
 					</view>
 					<view class="left overflow-hidden" v-else>
 						<view class="d-flex align-items-center overflow-hidden">
@@ -24,14 +24,14 @@
 							由<text class="text-color-base" style="margin: 0 10rpx">{{ store.name }}</text>配送
 						</view>
 					</view>
-					<view class="right">
+					<!-- <view class="right">
 						<view class="dinein" :class="{active: orderType == 'takein'}" @tap="SET_ORDER_TYPE('takein')">
 							<text>自取</text>
 						</view>
 						<view class="takeout" :class="{active: orderType == 'takeout'}" @tap="takout">
 							<text>外卖</text>
 						</view>
-					</view>
+					</view> -->
 				</view>
 				<view class="coupon">
 					<text class="title">"霸气mini卡"超级购券活动，赶紧去购买</text>
@@ -225,7 +225,8 @@
 		<!-- 购物车详情popup -->
 	</view>
 	<view class="loading" v-else>
-		<image src="/static/images/loading.gif"></image>
+		<!-- <image src="/static/images/loading.gif"></image> -->
+		<image src="/static/images/loadinggg.gif"></image>
 	</view>
 </template>
 

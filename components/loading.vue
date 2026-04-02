@@ -1,6 +1,6 @@
 <template>
 	<view class="loading">
-		<image src="/static/images/loading.gif"></image>
+		<image src="/static/images/loadinggg.gif"></image>
 	</view>
 </template>
 

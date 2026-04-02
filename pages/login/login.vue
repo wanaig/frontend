@@ -20,7 +20,7 @@
 					微信一键登录
 				</button>
 			<!-- #endif -->
-			<view class="d-flex flex-column justify-content-evenly align-items-center text-center" style="height: 30vh;">
+			<!-- <view class="d-flex flex-column justify-content-evenly align-items-center text-center" style="height: 30vh;">
 				<view class="w-100 font-size-base text-color-assist">新用户登录即加入会员，享会员权益</view>
 				<view class="w-100 row d-flex just-content-around align-items-center font-size-sm text-color-assist">
 					<view class="grid">
@@ -45,7 +45,7 @@
 					</view>
 				</view>
 				<view class="font-size-base text-color-primary">会员权益说明</view>
-			</view>
+			</view> -->
 		</view>
 	</view>
 </template>
@@ -100,9 +100,16 @@
 					const message = loginData.isNewMember ? '注册成功，欢迎加入奈雪会员' : '登录成功'
 					uni.showToast({ title: message, icon: 'success' })
 
-					setTimeout(() => {
+					// 等待 toast 显示
+					await new Promise(resolve => setTimeout(resolve, 1500))
+
+					uni.$emit('loginSuccess')
+					const pages = getCurrentPages()
+					if (pages.length > 1) {
 						uni.navigateBack()
-					}, 1500)
+					} else {
+						uni.reLaunch({ url: '/pages/menu/menu' })
+					}
 
 				} catch (err) {
 					uni.hideLoading()

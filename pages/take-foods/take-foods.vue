@@ -1,10 +1,10 @@
 <template>
 	<view class="container">
 		<view v-if="loading" class="d-flex w-100 h-100 flex-column just-content-center align-items-center">
-			<image src="/static/images/loading.gif" class="drinks-img"></image>
+			<image src="/static/images/loadinggg.gif" class="drinks-img"></image>
 		</view>
 		<view v-else-if="!orders.length" class="d-flex w-100 h-100 flex-column just-content-center align-items-center">
-			<image src="/static/images/loading.gif" class="drinks-img"></image>
+			<image src="/static/images/loadinggg.gif" class="drinks-img"></image>
 			<view class="tips d-flex flex-column align-items-center font-size-base text-color-assist">
 				<view>您还没有点单</view>
 				<view>快去犒劳一下自己吧~</view>
@@ -22,10 +22,10 @@
 								<view class="d-flex flex-column w-60">
 									<view class="w-100 font-size-lg text-color-base text-truncate">{{ order.store.name }}</view>
 								</view>
-								<view class="d-flex justify-content-end align-items-center w-40">
+								<!-- <view class="d-flex justify-content-end align-items-center w-40">
 									<image src="/static/images/order/mobile.png" style="width: 60rpx; height: 60rpx;margin-right: 30rpx;"></image>
 									<image src="/static/images/order/navigation.png" style="width: 60rpx; height: 60rpx;"></image>
-								</view>
+								</view> -->
 							</view>
 						</list-cell>
 						<!-- store info end -->
@@ -103,10 +103,10 @@
 						<!-- payment and amount begin -->
 						<list-cell :hover="false" padding="50rpx 30rpx">
 							<view class="w-100 d-flex flex-column">
-								<view class="pay-cell">
+								<!-- <view class="pay-cell">
 									<view>支付方式</view>
 									<view class="font-weight-bold">{{ order.payMode }}</view>
-								</view>
+								</view> -->
 								<view class="pay-cell">
 									<view>金额总计</view>
 									<view class="font-weight-bold">￥{{ order.amount }}</view>
@@ -127,10 +127,10 @@
 									<view>下单门店</view>
 									<view class="font-weight-bold">{{ order.store.name }}</view>
 								</view>
-								<view class="pay-cell">
+								<!-- <view class="pay-cell">
 									<view>支付方式</view>
 									<view class="font-weight-bold">{{ order.payMode }}</view>
-								</view>
+								</view> -->
 								<view class="pay-cell">
 									<view>订单号</view>
 									<view class="font-weight-bold">{{ order.orderNo }}</view>
@@ -142,7 +142,7 @@
 					<!-- order other info begin -->
 					<list-cell :hover="false" padding="50rpx 30rpx 20rpx" last>
 						<view class="w-100 d-flex flex-column">
-							<view class="pay-cell">
+							<!-- <view class="pay-cell">
 								<view>取单号</view>
 								<view class="font-weight-bold">{{ order.sortNum }}</view>
 							</view>
@@ -157,7 +157,7 @@
 							<view class="pay-cell">
 								<view>完成制作时间</view>
 								<view class="font-weight-bold">{{ order.productionedTime || '制作中' }}</view>
-							</view>
+							</view> -->
 							<view class="pay-cell">
 								<view>备注</view>
 								<view class="font-weight-bold">{{ order.postscript || '无' }}</view>
@@ -173,7 +173,7 @@
 
 <script>
 	import listCell from '@/components/list-cell/list-cell'
-	import {mapState} from 'vuex'
+	import {mapState, mapGetters} from 'vuex'
 
 	export default {
 		components: {
@@ -186,16 +186,19 @@
 			}
 		},
 		computed: {
-			...mapState(['order', 'orderType', 'address', 'store'])
+			...mapState(['order', 'orderType', 'address', 'store']),
+			...mapGetters(['isLogin'])
 		},
 		async onLoad() {
+			if(!this.isLogin) {
+				uni.navigateTo({url: '/pages/login/login'})
+				return
+			}
 			await this.loadCurrentOrder()
 		},
 		async onShow() {
-			// 每次显示页面时刷新订单状态
-			if (!this.loading) {
-				await this.loadCurrentOrder()
-			}
+			if (!this.isLogin) return
+			await this.loadCurrentOrder()
 		},
 		methods: {
 			/**
@@ -213,7 +216,7 @@
 					// 获取所有有效订单（status < 4 表示未完成）
 					if (Array.isArray(data) && data.length > 0) {
 						// 按创建时间倒序
-						const sortedOrders = data.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+						const sortedOrders = data.sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
 						// 筛选有效订单
 						const activeOrders = sortedOrders.filter(o => o.status < 4)
 						// 转换后端数据格式到前端格式
@@ -225,7 +228,7 @@
 							totalAmount: activeOrder.totalAmount,
 							amount: activeOrder.amount,
 							payMode: activeOrder.payMode || '微信支付',
-							createdAt: activeOrder.createdAt,
+							createdAt: activeOrder.created_at,
 							productionedTime: activeOrder.productionedTime,
 							postscript: activeOrder.postscript,
 							sortNum: activeOrder.sortNum,
@@ -295,6 +298,10 @@
 		/* #ifdef H5 */
 		margin-bottom: 100rpx;
 		/* #endif */
+
+		.bg-white {
+			margin-bottom: 24rpx;
+		}
 	}
 	
 	.drinks-img {

@@ -81,7 +81,7 @@ const MOCK_MODE = false  // ⚠️ 联调测试时改为 false
  *   如果提示域名不合法，在「详情」→「本地设置」中勾选
  *   「不校验合法域名、web-view（业务域名）、TLS 版本以及 HTTPS 证书」
  */
-const BASE_URL = 'http://192.168.46.107:8080/api'
+const BASE_URL = 'http://localhost:8080/api'
 
 /**
  * Storage Keys - 本地存储的 Key 名称
@@ -599,12 +599,12 @@ export default function api(name, params = {}) {
         console.log(`[API] ${name} 响应:`, result)
 
         // ================ 响应处理 ================
-        // 成功：code === 0
-        if (result.code === 0) {
+        // 成功：code == 0 (使用 == 兼容字符串和数字)
+        if (result.code == 0) {
           resolve(result.data)
         }
-        // 未登录或登录过期：code === 2001 或 2002
-        else if (result.code === 2001 || result.code === 2002) {
+        // 未登录或登录过期：code == 2001 或 2002
+        else if (result.code == 2001 || result.code == 2002) {
           // 清除过期的认证信息
           clearAuth()
 
@@ -788,9 +788,9 @@ export function postApi(name, data = {}) {
         console.log(`[API] ${name} 响应:`, result)
 
         // 响应处理（与 GET 相同）
-        if (result.code === 0) {
+        if (result.code == 0) {
           resolve(result.data)
-        } else if (result.code === 2001 || result.code === 2002) {
+        } else if (result.code == 2001 || result.code == 2002) {
           clearAuth()
           uni.showToast({
             title: result.message || '请先登录',
@@ -952,8 +952,14 @@ function requestApi(method, name, id, data) {
           return
         }
 
-        // 如果 statusCode 为 undefined 但有有效数据，直接使用数据
-        const result = response.data
+        // 处理响应数据（兼容数组格式）
+        let result
+        if (Array.isArray(response)) {
+          const actualResponse = response.find(r => r && typeof r === 'object' && r.statusCode) || response[response.length - 1]
+          result = actualResponse ? actualResponse.data : null
+        } else {
+          result = response.data
+        }
 
         // ================ 响应数据校验 ================
         if (!result || typeof result !== 'object') {
@@ -967,9 +973,9 @@ function requestApi(method, name, id, data) {
         }
 
         // 响应处理（与 GET 相同）
-        if (result.code === 0) {
+        if (result.code == 0) {
           resolve(result.data)
-        } else if (result.code === 2001 || result.code === 2002) {
+        } else if (result.code == 2001 || result.code == 2002) {
           clearAuth()
           uni.showToast({
             title: result.message || '请先登录',
@@ -1230,7 +1236,7 @@ export function getMemberInfo() {
  *   await updateMemberInfo('新昵称', 'https://...', 1, '1990-01-01')
  */
 export function updateMemberInfo(nickname, avatar, gender, birthday) {
-  return putApi('member.info', null, { nickname, avatar, gender, birthday })
+  return putApi('member', null, { nickname, avatar, gender, birthday })
 }
 
 /**
@@ -1371,6 +1377,48 @@ function transformGoodsList(data) {
 }
 
 /**
+ * transformOrder - 转换后端订单数据为前端格式
+ *
+ * 后端返回驼峰命名(camelCase)，前端使用蛇形命名(snake_case)
+ * 需要进行字段映射转换
+ */
+function transformOrder(order) {
+  return {
+    id: order.id,
+    order_no: order.orderNo,
+    status: order.status,
+    status_text: order.statusText,
+    total_amount: order.totalAmount,
+    amount: order.amount,
+    goods_num: order.goodsNum,
+    pay_mode: order.payMode,
+    created_at: order.createdAt,
+    payed_at: order.payedAt,
+    completed_time: order.completedTime,
+    productioned_time: order.productionedTime,
+    postscript: order.postscript,
+    sort_num: order.sortNum,
+    typeCate: order.typeCate,
+    coupon_amount: order.couponAmount,
+    invoice_status: 0,  // 后端暂无此字段
+    store: order.store ? {
+      name: order.store.name,
+      address: order.store.address,
+      mobile: order.store.mobile
+    } : {},
+    goods: (order.goods || []).map(g => ({
+      name: g.name,
+      number: g.number,
+      price: g.price,
+      amount: g.amount,
+      property: g.property,
+      image: g.image
+    })),
+    discount: order.discount || []
+  }
+}
+
+/**
  * getOrderList - 获取订单列表
  *
  * 【功能说明】
@@ -1389,7 +1437,12 @@ function transformGoodsList(data) {
  *   const orders = await getOrderList({ status: 1, page: 1, pageSize: 10 })
  */
 export function getOrderList(params) {
-  return api('orders', params)
+  return api('orders', params).then(data => {
+    if (Array.isArray(data)) {
+      return data.map(order => transformOrder(order))
+    }
+    return data
+  })
 }
 
 /**
@@ -1408,7 +1461,12 @@ export function getOrderList(params) {
  *   const detail = await getOrderDetail('123456789')
  */
 export function getOrderDetail(orderId) {
-  return api('order.detail', { id: orderId })
+  return api('order.detail', { id: orderId }).then(data => {
+    if (data) {
+      return transformOrder(data)
+    }
+    return data
+  })
 }
 
 /**
@@ -1478,6 +1536,28 @@ export function cancelOrder(orderId, reason) {
 }
 
 /**
+ * transformAddress - 转换后端地址数据为前端格式
+ */
+function transformAddress(addr) {
+  return {
+    id: addr.id,
+    acceptName: addr.acceptName,
+    mobile: addr.mobile,
+    sex: addr.sex || 0,
+    province: addr.province,
+    city: addr.city,
+    area: addr.area,
+    provinceName: addr.provinceName || '',
+    cityName: addr.cityName || '',
+    areaName: addr.areaName || '',
+    street: addr.street || '',
+    doorNumber: addr.doorNumber || '',
+    isDefault: addr.isDefault || 0,
+    poiname: addr.poiname || ''
+  }
+}
+
+/**
  * getAddressList - 获取收货地址列表
  *
  * 【功能说明】
@@ -1490,7 +1570,12 @@ export function cancelOrder(orderId, reason) {
  *   const addresses = await getAddressList()
  */
 export function getAddressList() {
-  return api('addresses')
+  return api('addresses').then(data => {
+    if (Array.isArray(data)) {
+      return data.map(addr => transformAddress(addr))
+    }
+    return []
+  })
 }
 
 /**
@@ -1732,7 +1817,22 @@ export function exchangePointsGoods(goodsId, quantity) {
  *   const cards = await getRechargeCardList()
  */
 export function getRechargeCardList() {
-  return api('rechargeCards')
+  return api('rechargeCards').then(data => {
+    if (Array.isArray(data)) {
+      return data.map((card, index) => ({
+        id: card.id,
+        name: card.name,
+        value: card.value,
+        sellPrice: card.sellPrice,
+        desc: card.desc,
+        image: card.image,
+        sales: card.sales,
+        status: card.status,
+        selected: index === 0  // 默认选中第一个
+      }))
+    }
+    return []
+  })
 }
 
 /**
