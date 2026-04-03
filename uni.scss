@@ -14,25 +14,25 @@
 
 /* 颜色变量 */
 /* 行为相关颜色 */
-$color-primary: #ADB838;
-$color-success: #4cd964;
-$color-warning: #FAB714;
-$color-error: #D12E32;
+$color-primary: #8FD4A8;
+$color-success: #8FD4A8;
+$color-warning: #FFD4A8;
+$color-error: #FFB4B4;
 
 /* 文字基本颜色 */
-$text-color-base: #5A5B5C; //基本色
-$text-color-assist: #919293; //辅助色
-$text-color-black: #3B3C3E; //黑
-$text-color-grey: #878889; //灰
-$text-color-white: #ffffff; //白
+$text-color-base: #6B7B6B;
+$text-color-assist: #9AAA9A;
+$text-color-black: #5A6A5A;
+$text-color-grey: #A8B8A8;
+$text-color-white: #FFFDF7; //白
 
 /* 背景颜色 */
-$bg-color: #F1F8FA;
-$bg-color-grey: #F5F5F5;
-$bg-color-primary: #E8EACF;
+$bg-color: #FFFDF7;
+$bg-color-grey: #F5F8F5;
+$bg-color-primary: #E8F5E8;
 
 /* 边框颜色 */
-$border-color:#e2e2e2;
+$border-color:#E0EBE0;
 
 /* 尺寸变量 */
 
@@ -73,7 +73,7 @@ $uni-text-color-grey: #999999; // 灰色文字
 $uni-text-color-disable: #c0c0c0; // 禁用文字颜色
 $uni-font-size-base: 28rpx; // 文字尺寸基础
 $uni-font-size-sm: 24rpx; // 文字尺寸小
-$uni-color-primary: #ADB838; // 主色
+$uni-color-primary: #8FD4A8; // 主色
 $uni-color-error: #D12E32; // 错误颜色
 $uni-opacity-disabled: 0.3; // 禁用态透明度
 

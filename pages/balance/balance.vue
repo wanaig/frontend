@@ -27,7 +27,7 @@
 				<view class="font-size-lg text-color-base font-weight-bold" style="margin-bottom: 20rpx;">使用说明</view>
 				<view class="pre-line font-size-sm text-color-assist">
 					<!-- {{ rechargeCard.desc }} -->
-					  解释权由我所有
+					  Kitty 余额不足啦，快去充值喝奶茶吧～
 				</view>
 			</template>
 			
@@ -39,7 +39,7 @@
 					<view class="text-color-base">我已阅读并同意</view>
 					<view class="text-color-primary">《储值协议》</view>
 				</view>
-				<button type="primary" class="b" @tap="doRecharge">购买</button>
+				<button type="primary" class="b" :disabled="isRecharging" @tap="doRecharge">{{ isRecharging ? '购买中...' : '购买' }}</button>
 			</view>
 			<!-- bottom box end -->
 			
@@ -56,7 +56,8 @@
 			return {
 				agree: false,
 				amounts: [],
-				member: {}
+				member: {},
+				isRecharging: false
 			}
 		},
 		async onLoad() {
@@ -74,6 +75,8 @@
 				this.$set(this.amounts[index], 'selected', true)
 			},
 			async doRecharge() {
+				if (this.isRecharging) return
+
 				if (!this.agree) {
 					return uni.showToast({ title: '请阅读并同意储值协议', icon: 'none' })
 				}
@@ -82,17 +85,20 @@
 					return uni.showToast({ title: '请选择储值金额', icon: 'none' })
 				}
 
-				uni.showLoading({ title: '创建订单中...' })
+				this.isRecharging = true
+				uni.showLoading({ title: '创建订单中...', mask: true })
 
 				try {
 					await recharge(selectedCard.id, selectedCard.value, 'wechat')
 					uni.hideLoading()
+					this.isRecharging = false
 					uni.showToast({ title: '储值成功', icon: 'success' })
 					setTimeout(() => {
 						uni.navigateBack()
 					}, 1500)
 				} catch (err) {
 					uni.hideLoading()
+					this.isRecharging = false
 					uni.showToast({ title: '储值失败', icon: 'none' })
 				}
 			}
@@ -145,6 +151,10 @@
 		line-height: 70rpx;
 		border-radius: 50rem !important;
 		margin-bottom: 30rpx;
+
+		&[disabled] {
+			opacity: 0.6;
+		}
 	}
 }
 </style>

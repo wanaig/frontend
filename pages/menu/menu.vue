@@ -34,7 +34,7 @@
 					</view> -->
 				</view>
 				<view class="coupon">
-					<text class="title">"霸气mini卡"超级购券活动，赶紧去购买</text>
+					<text class="title">欢迎回来 Kitty～今天也要喝甜甜的茶呀</text>
 					<view class="iconfont iconarrow-right"></view>
 				</view>
 			</view>
@@ -247,10 +247,10 @@ export default {
 			categories: [], //所有分类
 			ads: [
 				{image: 'https://img-shop.qmimg.cn/s23107/2020/04/27/4ebdb582a5185358c4.jpg?imageView2/2/w/600/h/600'},
-				{image: 'https://images.qmai.cn/s23107/2020/05/08/c25de6ef72d2890630.png?imageView2/2/w/600/h/600'},
-				{image: 'https://img-shop.qmimg.cn/s23107/2020/04/10/add546c1b1561f880d.jpg?imageView2/2/w/600/h/600'},
-				{image: 'https://images.qmai.cn/s23107/2020/04/30/b3af19e0de8ed42f61.jpg?imageView2/2/w/600/h/600'},
-				{image: 'https://img-shop.qmimg.cn/s23107/2020/04/17/8aeb78516d63864420.jpg?imageView2/2/w/600/h/600'}
+				// {image: 'https://images.qmai.cn/s23107/2020/05/08/c25de6ef72d2890630.png?imageView2/2/w/600/h/600'},
+				// {image: 'https://img-shop.qmimg.cn/s23107/2020/04/10/add546c1b1561f880d.jpg?imageView2/2/w/600/h/600'},
+				// {image: 'https://images.qmai.cn/s23107/2020/04/30/b3af19e0de8ed42f61.jpg?imageView2/2/w/600/h/600'},
+				// {image: 'https://img-shop.qmimg.cn/s23107/2020/04/17/8aeb78516d63864420.jpg?imageView2/2/w/600/h/600'}
 			],
 			loading: true,
 			currentCateId: null,//默认分类
@@ -482,9 +482,12 @@ export default {
 					image: good.images,
 					use_property: good.use_property,
 					props_text: good.props_text,
-					props: good.props
+					props: good.props,
+					content: good.content
 				})
 			}
+			console.log('[菜单页] 添加到购物车:', JSON.stringify(this.cart))
+			console.log('[菜单页] 购物车总金额:', this.cart.reduce((acc, cur) => acc + cur.number * cur.price, 0))
 		},
 		handleReduceFromCart(item, good) {
 			const index = this.cart.findIndex(item => item.id === good.id)
@@ -567,10 +570,11 @@ export default {
 				uni.navigateTo({url: '/pages/login/login'})
 				return
 			}
-			
+
 			uni.showLoading({title: '加载中'})
+			console.log('[菜单页] 去支付，保存购物车:', JSON.stringify(this.cart))
 			uni.setStorageSync('cart', JSON.parse(JSON.stringify(this.cart)))
-			
+
 			uni.navigateTo({
 				url: '/pages/pay/pay'
 			})

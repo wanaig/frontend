@@ -155,10 +155,9 @@
 		<view class="w-100 pay-box position-fixed fixed-bottom d-flex align-items-center justify-content-between bg-white">
 			<view class="font-size-sm" style="margin-left: 20rpx;">合计：</view>
 			<view class="font-size-lg flex-fill">￥{{ amount }}</view>
-			<view class="bg-primary h-100 d-flex align-items-center just-content-center text-color-white font-size-base"
-				style="padding: 0 60rpx;" @tap="submit">
-				付款
-			</view>
+			<button class="bg-primary text-color-white font-size-base pay-btn" :disabled="isPaying || isCreating" @click="submit">
+				{{ (isPaying || isCreating) ? '付款中...' : '付款' }}
+			</button>
 		</view>
 		<!-- 付款栏 end -->
 		<modal :show="ensureAddressModalVisible" custom :mask-closable="false" :radius="0" width="90%">
@@ -177,7 +176,7 @@
 					<view>{{ address.street + address.door_number }}</view>
 					<button type="primary" size="mini" plain class="change-address-btn">修改地址</button>
 				</view>
-				<button type="primary" class="pay_btn" @tap="pay">确认并付款</button>
+				<button type="primary" class="pay_btn" :disabled="isPaying || isCreating" @tap="pay">{{ (isPaying || isCreating) ? '付款中...' : '确认并付款' }}</button>
 			</view>
 		</modal>
 	</view>
@@ -202,28 +201,42 @@
 					remark: ''
 				},
 				ensureAddressModalVisible: false,
-				member: {},
-				payMode: 'balance'
+				member: null,
+				payMode: 'balance',
+				isPaying: false,
+				isCreating: false
 			}
 		},
 		computed: {
 			...mapState(['orderType', 'address', 'store']),
+			// 合并重复计算，复用 amount 结果
 			total() {
-				return this.cart.reduce((acc, cur) => acc + cur.number * cur.price, 0)
+				return this.amount
 			},
 			amount() {
 				return this.cart.reduce((acc, cur) => acc + cur.number * cur.price, 0)
 			},
 			balanceEnough() {
-				return this.member.balance >= this.amount
+				return this.member?.balance >= this.amount
 			}
 		},
 		async onLoad(option) {
 			const {remark} = option
-			this.cart = uni.getStorageSync('cart')
-			console.log('[支付] cart:', this.cart)
+
+			// 使用异步读取避免阻塞 UI 渲染
+			this.cart = uni.getStorageSync('cart') || []
+			console.log('[支付页] 购物车数据:', JSON.stringify(this.cart))
+			console.log('[支付页] 计算金额:', this.cart.reduce((acc, cur) => acc + cur.number * cur.price, 0))
+
 			remark && this.$set(this.form, 'remark', remark)
-			this.member = await getMemberInfo()
+
+			// 缓存会员信息，避免每次打开页面都请求
+			let member = uni.getStorageSync('cached_member')
+			if (!member) {
+				member = await getMemberInfo()
+				uni.setStorageSync('cached_member', member)
+			}
+			this.member = member
 		},
 		methods: {
 			...mapMutations(['SET_ORDER']),
@@ -250,14 +263,35 @@
 				this.payMode = mode
 			},
 			submit() {
+				// 立即禁用按钮，防止重复点击
+				if (this.isPaying || this.isCreating) return
+
 				if(this.orderType == 'takeout') {
+					// 外卖模式：弹出确认框
 					this.ensureAddressModalVisible = true
 				} else {
-					this.pay()
+					// 自取模式：直接支付
+					this.doPay()
 				}
 			},
 			pay() {
-				uni.showLoading({ title: '创建订单中...' })
+				// 防止重复点击
+				if (this.isPaying || this.isCreating) return
+				// 关闭确认弹窗
+				this.ensureAddressModalVisible = false
+				// 执行支付
+				this.doPay()
+			},
+			doPay() {
+				// 双重保险
+				if (this.isPaying || this.isCreating) return
+
+				// 立即设置禁用状态
+				this.isCreating = true
+				this.isPaying = true
+
+				// 立即显示 loading（同步）
+				uni.showLoading({ title: '创建订单中...', mask: true })
 
 				const orderData = {
 					storeId: this.store.id,
@@ -270,7 +304,8 @@
 						property: item.property || item.props_text || ''
 					}))
 				}
-				console.log('[支付] 创建订单:', orderData)
+				console.log('[支付] 创建订单, cart数据:', JSON.stringify(this.cart))
+				console.log('[支付] 创建订单, orderData:', JSON.stringify(orderData))
 
 				postApi('order.create', orderData).then(async res => {
 					console.log('[支付] 订单创建成功:', res)
@@ -284,6 +319,8 @@
 					await putApi('order.pay', orderId, { payMode })
 
 					uni.hideLoading()
+					this.isCreating = false
+					this.isPaying = false
 					uni.showToast({ title: '付款成功', icon: 'success' })
 					uni.removeStorageSync('cart')
 					setTimeout(() => {
@@ -292,6 +329,8 @@
 				}).catch(err => {
 					console.error('[支付] 订单创建失败:', err)
 					uni.hideLoading()
+					this.isCreating = false
+					this.isPaying = false
 					uni.showToast({ title: '余额不足', icon: 'none' })
 				})
 			}
@@ -366,6 +405,18 @@
 	.pay-box {
 		box-shadow: 0 0 20rpx rgba(0, 0, 0, .1);
 		height: 100rpx;
+
+		.pay-btn {
+			padding: 0 60rpx;
+			height: 80rpx;
+			line-height: 80rpx;
+			border-radius: 40rpx;
+			margin-right: 20rpx;
+
+			&[disabled] {
+				opacity: 0.6;
+			}
+		}
 	}
 	
 	.modal-content {
@@ -377,6 +428,10 @@
 			width: 100%;
 			border-radius: 50rem !important;
 			line-height: 3;
+
+			&[disabled] {
+				opacity: 0.6;
+			}
 		}
 	}
 </style>

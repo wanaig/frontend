@@ -1,7 +1,7 @@
 <template>
 	<view class="container">
 		<view class="orders-list d-flex flex-column w-100" style="padding: 20rpx; padding-bottom: 0;">
-			<view class="order-item" v-for="(item, index) in orders" :key="index" style="margin-bottom: 30rpx;" @tap="detail(item.id)">
+			<view class="order-item" v-for="(item, index) in orders" :key="index" style="margin-bottom: 30rpx;" @tap="detail(item)">
 				<list-cell :hover="false">
 					<view class="w-100 d-flex align-items-center">
 						<view class="flex-fill d-flex flex-column">
@@ -29,7 +29,7 @@
 								<view class="font-size-lg">￥{{ item.amount }}</view>
 							</view>
 						</view>
-						<view class="d-flex align-items-center justify-content-end">
+						<!-- <view class="d-flex align-items-center justify-content-end">
 							<view style="margin-right: 10rpx;">
 								<button type="primary" plain size="mini" v-if="item.invoice_status > 0">查看发票</button>
 								<button type="primary" plain size="mini" v-else @tap.stop="goToInvoice">开发票</button>
@@ -37,7 +37,7 @@
 							<view>
 								<button type="primary" plain size="mini" @tap.stop="review(item)">去评价</button>
 							</view>
-						</view>
+						</view> -->
 					</view>
 				</list-cell>
 			</view>
@@ -114,9 +114,9 @@
 
 				uni.hideLoading()
 			},
-			detail(id) {
+			detail(order) {
 				uni.navigateTo({
-					url: '/pages/orders/detail?id=' + id
+					url: '/pages/orders/detail?order=' + encodeURIComponent(JSON.stringify(order))
 				})
 			},
 			review(order) {

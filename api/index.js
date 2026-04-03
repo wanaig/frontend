@@ -1126,6 +1126,7 @@ export function isLogin() {
  */
 export function logout() {
   clearAuth()
+  uni.removeStorageSync('cached_member')
   uni.reLaunch({ url: '/pages/login/login' })
 }
 
@@ -1218,6 +1219,18 @@ export function wxLoginRegister(code) {
  */
 export function getMemberInfo() {
   return api('member')
+}
+
+/**
+ * clearMemberCache - 清除会员信息缓存
+ *
+ * 【使用场景】
+ *   - 用户更新个人信息后调用
+ *   - 退出登录时调用
+ *   - 需要强制刷新会员数据时调用
+ */
+export function clearMemberCache() {
+  uni.removeStorageSync('cached_member')
 }
 
 /**

@@ -3,7 +3,7 @@
 		{
 			"path": "pages/menu/menu",
 			"style": {
-				"navigationBarTitleText": "奈雪の茶",
+				"navigationBarTitleText": "Kittyの茶铺",
 				"navigationBarTextStyle": "black",
 				"navigationBarBackgroundColor": "#ffffff"
 			}
@@ -15,14 +15,14 @@
 		}, {
 			"path": "pages/take-foods/take-foods",
 			"style": {
-				"navigationBarTitleText": "奈雪の茶",
+				"navigationBarTitleText": "Kittyの茶铺",
 				"navigationBarTextStyle": "black",
 				"navigationBarBackgroundColor": "#ffffff"
 			}
 		}, {
 			"path": "pages/mine/mine",
 			"style": {
-				"navigationBarTitleText": "奈雪乐园",
+				"navigationBarTitleText": "Kittyの茶铺",
 				"navigationBarTextStyle": "black",
 				"navigationBarBackgroundColor": "#ffffff"
 			}
@@ -30,7 +30,7 @@
 	    ,{
             "path" : "pages/pay/pay",
             "style" : {
-				"navigationBarTitleText": "奈雪の茶",
+				"navigationBarTitleText": "Kittyの茶铺",
 				"navigationBarTextStyle": "black",
 				"navigationBarBackgroundColor": "#ffffff"
 			}
@@ -38,7 +38,7 @@
         ,{
             "path" : "pages/remark/remark",
             "style" : {
-				"navigationBarTitleText": "奈雪の茶",
+				"navigationBarTitleText": "Kittyの茶铺",
 				"navigationBarTextStyle": "black",
 				"navigationBarBackgroundColor": "#ffffff"
 			}
@@ -217,13 +217,13 @@
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "uni-app",
-		"navigationBarBackgroundColor": "#F8F8F8",
-		"backgroundColor": "#F8F8F8"
+		"navigationBarBackgroundColor": "#FFFDF7",
+		"backgroundColor": "#FFFDF7"
 	},
 	"tabBar": {
-		"color": "#919293",
-		"selectedColor": "#97AF13",
-		"backgroundColor": "#fff",
+		"color": "#9AAA9A",
+		"selectedColor": "#8FD4A8",
+		"backgroundColor": "#FFFDF7",
 		"borderStyle": "black",
 		"list": [
 		// 	{

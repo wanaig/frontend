@@ -14,7 +14,7 @@
 		</view>
 		<template v-else>
 			<view class="order-box">
-				<view class="bg-white" v-for="(order, orderIndex) in orders" :key="orderIndex">
+				<view class="bg-white" v-for="(order, orderIndex) in displayOrders" :key="orderIndex">
 					<view class="section">
 						<!-- store info begin -->
 						<list-cell :hover="false">
@@ -121,7 +121,7 @@
 							<view class="w-100 d-flex flex-column">
 								<view class="pay-cell">
 									<view>下单时间</view>
-									<view class="font-weight-bold">{{ formatDateTime(order.createdAt) }}</view>
+									<view class="font-weight-bold"> <!--{{ formatDateTime(order.createdAt) }}--> {{ order.completedTime }}</view>
 								</view>
 								<view class="pay-cell">
 									<view>下单门店</view>
@@ -167,6 +167,18 @@
 					<!-- order other info end -->
 				</view>
 			</view>
+			<!-- 加载更多 -->
+			<view v-if="hasMore" class="load-more" @tap="loadMore">
+				<view v-if="loadingMore" class="d-flex align-items-center just-content-center">
+					<image src="/static/images/loadinggg.gif" class="loading-icon"></image>
+					<view class="ml-10">加载中...</view>
+				</view>
+				<view v-else class="text-center text-color-assist">加载更多</view>
+			</view>
+			<!-- 无更多订单 -->
+			<view v-if="!hasMore && orders.length > 0" class="no-more text-center text-color-assist">
+				没有更多订单了
+			</view>
 		</template>
 	</view>
 </template>
@@ -182,12 +194,20 @@
 		data() {
 			return {
 				loading: true,
-				orders: []
+				orders: [],
+				page: 1,
+				pageSize: 3,
+				hasMore: true,
+				loadingMore: false,
+				allOrders: []  // 存储所有订单用于分页
 			}
 		},
 		computed: {
 			...mapState(['order', 'orderType', 'address', 'store']),
-			...mapGetters(['isLogin'])
+			...mapGetters(['isLogin']),
+			displayOrders() {
+				return this.allOrders.slice(0, this.page * this.pageSize)
+			}
 		},
 		async onLoad() {
 			if(!this.isLogin) {
@@ -199,6 +219,11 @@
 		async onShow() {
 			if (!this.isLogin) return
 			await this.loadCurrentOrder()
+		},
+		onReachBottom() {
+			if (this.hasMore && !this.loadingMore) {
+				this.loadMore()
+			}
 		},
 		methods: {
 			/**
@@ -220,7 +245,7 @@
 						// 筛选有效订单
 						const activeOrders = sortedOrders.filter(o => o.status < 4)
 						// 转换后端数据格式到前端格式
-						this.orders = activeOrders.map(activeOrder => ({
+						this.allOrders = activeOrders.map(activeOrder => ({
 							id: activeOrder.id,
 							orderNo: activeOrder.orderNo,
 							status: activeOrder.status,
@@ -229,6 +254,7 @@
 							amount: activeOrder.amount,
 							payMode: activeOrder.payMode || '微信支付',
 							createdAt: activeOrder.created_at,
+							completedTime: activeOrder.completedTime,
 							productionedTime: activeOrder.productionedTime,
 							postscript: activeOrder.postscript,
 							sortNum: activeOrder.sortNum,
@@ -241,16 +267,40 @@
 								property: g.property || ''
 							}))
 						}))
+						this.orders = this.allOrders
+						// 判断是否还有更多
+						this.hasMore = this.allOrders.length > this.pageSize
 						console.log('[取餐] 有效订单列表:', this.orders)
 					} else {
+						this.allOrders = []
 						this.orders = []
+						this.hasMore = false
 					}
 				} catch (err) {
 					console.error('[取餐] 加载失败:', err)
+					this.allOrders = []
 					this.orders = []
+					this.hasMore = false
 				} finally {
 					this.loading = false
 				}
+			},
+
+			/**
+			 * loadMore - 加载更多订单
+			 */
+			loadMore() {
+				if (!this.hasMore || this.loadingMore) return
+
+				this.loadingMore = true
+				this.page++
+
+				// 模拟加载延迟
+				setTimeout(() => {
+					this.orders = this.allOrders.slice(0, this.page * this.pageSize)
+					this.hasMore = this.allOrders.length > this.page * this.pageSize
+					this.loadingMore = false
+				}, 300)
 			},
 
 			/**
@@ -308,7 +358,13 @@
 		width: 260rpx;
 		height: 260rpx;
 	}
-	
+
+	.load-more,
+	.no-more {
+		padding: 30rpx 0;
+		font-size: $font-size-sm;
+	}
+
 	.tips {
 		margin: 60rpx 0 80rpx;
 		line-height: 48rpx;

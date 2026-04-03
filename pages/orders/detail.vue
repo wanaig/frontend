@@ -1,16 +1,22 @@
 <template>
 	<view class="container" style="padding:20rpx;">
-		<view style="padding-bottom: 100rpx;">
+		<view v-if="!order.id" class="d-flex w-100 h-100 flex-column just-content-center align-items-center">
+			<image src="/static/images/loadinggg.gif" class="drinks-img"></image>
+			<view class="tips d-flex flex-column align-items-center font-size-base text-color-assist">
+				<view>订单不存在</view>
+			</view>
+		</view>
+		<view v-else style="padding-bottom: 100rpx;">
 			<view class="bg-white">
 				<view class="section">
 					<!-- store info begin -->
 					<list-cell :hover="false">
 						<view class="w-100 d-flex align-items-center">
 							<view class="d-flex flex-column w-60">
-								<view class="w-100 font-size-lg text-color-base text-truncate mb-10">{{ order.store.name }}</view>
+								<view class="w-100 font-size-lg text-color-base text-truncate mb-10">{{ storeName }}</view>
 								<view class="w-100 d-flex align-items-center overflow-hidden">
 									<image src="/static/images/order/location.png" class="flex-shrink-0" style="width: 30rpx; height: 30rpx;"></image>
-									<view class="text-truncate font-size-sm text-color-assist">{{ order.store.address }}</view>
+									<view class="text-truncate font-size-sm text-color-assist">{{ storeAddress }}</view>
 								</view>
 							</view>
 							<view class="d-flex justify-content-end align-items-center w-40">
@@ -63,7 +69,7 @@
 							</view>
 							<view class="pay-cell">
 								<view>下单门店</view>
-								<view class="font-weight-bold">{{ order.store.name }}</view>
+								<view class="font-weight-bold">{{ storeName }}</view>
 							</view>
 							<view class="pay-cell">
 								<view>支付方式</view>
@@ -92,13 +98,13 @@
 							<view>取餐时间</view>
 							<view class="font-weight-bold">立即取餐</view>
 						</view>
-						<view class="pay-cell">
+						<!-- <view class="pay-cell">
 							<view>完成制作时间</view>
 							<view class="font-weight-bold">{{ order.productioned_time }}</view>
-						</view>
+						</view> -->
 						<view class="pay-cell">
 							<view>备注</view>
-							<view class="font-weight-bold">{{ order.postscript }}</view>
+							<view class="font-weight-bold">{{ order.postscript || '无' }}</view>
 						</view>
 					</view>
 				</list-cell>
@@ -106,22 +112,21 @@
 			</view>
 			<view class="position-relative w-100">
 				<image src="/static/images/order/bottom.png" mode="widthFix" class="w-100"></image>
-				<view class="invote-box" v-if="!order.invoice_status">
+				<!-- <view class="invote-box" v-if="!order.invoice_status">
 					<view class="font-size-base text-color-primary" @tap="goToInvoice">去开发票</view>
 					<image src="/static/images/order/right.png"></image>
-				</view>
+				</view> -->
 			</view>
 		</view>
-		<view class="btn-box">
+		<!-- <view class="btn-box">
 			<view class="item" v-if="order.invoice_status > 0"><button type="primary">查看发票</button></view>
 			<view class="item"><button type="primary" plain @tap="review">去评价</button></view>
 			<view class="item"><button type="primary">再来一单</button></view>
-		</view>
+		</view> -->
 	</view>
 </template>
 
 <script>
-import Orders from '@/api/orders';
 import listCell from '@/components/list-cell/list-cell';
 
 export default {
@@ -133,14 +138,33 @@ export default {
 			order: {}
 		};
 	},
-	onLoad({ id }) {
-		this.order = Orders.find(item => item.id == id);
+	computed: {
+		storeName() {
+			const order = this.order
+			return order && order.store ? order.store.name : ''
+		},
+		storeAddress() {
+			const order = this.order
+			return order && order.store ? order.store.address : ''
+		}
+	},
+	onLoad(options) {
+		const orderStr = options.order
+		if (orderStr) {
+			try {
+				this.order = JSON.parse(decodeURIComponent(orderStr))
+			} catch (e) {
+				console.error('解析订单数据失败:', e)
+				this.order = {}
+			}
+		}
 	},
 	methods: {
 		review() {
-			const date = this.order.completed_time.split(' ')[0]
+			if (!this.order.id) return
+			const date = (this.order.completed_time || '').split(' ')[0]
 			uni.navigateTo({
-				url: '/pages/review/review?storename=' + this.order.store.name + '&typeCate=' + this.order.typeCate + '&date=' + date
+				url: '/pages/review/review?storename=' + this.storeName + '&typeCate=' + this.order.typeCate + '&date=' + date
 			})
 		},
 		goToInvoice() {
@@ -153,6 +177,16 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+	.drinks-img {
+		width: 260rpx;
+		height: 260rpx;
+	}
+
+	.tips {
+		margin: 60rpx 0 80rpx;
+		line-height: 48rpx;
+	}
+
 @mixin arch {
 	content: "";
 	position: absolute;
