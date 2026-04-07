@@ -10,7 +10,7 @@
 				<view>快去犒劳一下自己吧~</view>
 			</view>
 			<button type="primary" class="drink-btn" size="default" @tap="menu">去点餐</button>
-			<view class="font-size-sm text-color-primary" @tap="orders">查看历史订单</view>
+			<view class="font-size-sm text-color-primary" @tap="goToOrders">查看历史订单</view>
 		</view>
 		<template v-else>
 			<view class="order-box">
@@ -252,7 +252,7 @@
 							statusText: activeOrder.statusText,
 							totalAmount: activeOrder.totalAmount,
 							amount: activeOrder.amount,
-							payMode: activeOrder.payMode || '微信支付',
+							payMode: activeOrder.payMode || '余额支付',
 							createdAt: activeOrder.created_at,
 							completedTime: activeOrder.completedTime,
 							productionedTime: activeOrder.productionedTime,
@@ -318,7 +318,7 @@
 				return `${year}-${month}-${day} ${hour}:${minute}:${second}`
 			},
 
-			orders() {
+			goToOrders() {
 				if(!this.$store.getters.isLogin) {
 					uni.navigateTo({url: '/pages/login/login'})
 					return

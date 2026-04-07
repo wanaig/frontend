@@ -81,7 +81,8 @@ const MOCK_MODE = false  // ⚠️ 联调测试时改为 false
  *   如果提示域名不合法，在「详情」→「本地设置」中勾选
  *   「不校验合法域名、web-view（业务域名）、TLS 版本以及 HTTPS 证书」
  */
-const BASE_URL = 'http://localhost:8080/api'
+const BASE_URL = 'http://10.201.0.163:8011/api'
+// const BASE_URL = 'http://localhost:8080/api'
 
 /**
  * Storage Keys - 本地存储的 Key 名称
@@ -399,6 +400,8 @@ function buildUrl(name, params) {
     // ===== 会员模块 =====
     'member.login': '/member/login',           // POST - 微信登录（需授权）
     'member.wxlogin': '/member/wxlogin',       // POST - 微信一键登录注册（只需code）
+    'member.douyinlogin': '/member/douyinlogin', // POST - 抖音一键登录注册
+    'member.phonelogin': '/member/phonelogin',   // POST - 手机号登录注册
     member: '/member/info',                   // GET/PUT - 会员信息
 
     // ===== 门店模块 =====
@@ -1202,6 +1205,53 @@ export function wxLogin(code) {
  */
 export function wxLoginRegister(code) {
   return postApi('member.wxlogin', { code })
+}
+
+/**
+ * douyinLogin - 抖音一键登录注册
+ *
+ * 【功能说明】
+ *   调用后端抖音一键登录注册接口，用 code 换取 session
+ *   如果用户不存在，后端自动创建新用户
+ *
+ * 【参数说明】
+ *   @param {string} code - 抖音授权码（通过 tt.login() 获取）
+ *
+ * 【前置条件】
+ *   先调用 tt.login() 获取 code
+ *
+ * 【使用示例】
+ *   tt.login({
+ *     success: async (res) => {
+ *       try {
+ *         const loginData = await douyinLogin(res.code)
+ *         saveLoginData(loginData)
+ *         console.log('登录成功')
+ *       } catch (e) {
+ *         console.error('登录失败', e)
+ *       }
+ *     }
+ *   })
+ */
+export function douyinLogin(code) {
+  return postApi('member.douyinlogin', { code })
+}
+
+/**
+ * phoneLogin - 手机号登录注册
+ *
+ * 【功能说明】
+ *   调用后端手机号登录注册接口，手机号存在则登录，不存在则自动注册
+ *
+ * 【参数说明】
+ *   @param {string} phone - 手机号
+ *
+ * 【使用示例】
+ *   const loginData = await phoneLogin('13800138000')
+ *   saveLoginData(loginData)
+ */
+export function phoneLogin(phone) {
+  return postApi('member.phonelogin', { phone })
 }
 
 /**

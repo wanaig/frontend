@@ -89,7 +89,7 @@
 				uni.showLoading({ title: '创建订单中...', mask: true })
 
 				try {
-					await recharge(selectedCard.id, selectedCard.value, 'wechat')
+					await recharge(selectedCard.id, selectedCard.value, 'balance')
 					uni.hideLoading()
 					this.isRecharging = false
 					uni.showToast({ title: '储值成功', icon: 'success' })

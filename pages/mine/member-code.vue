@@ -39,14 +39,6 @@
 				<view class="tips d-flex just-content-center align-items-center" style="margin-bottom: 50rpx;">
 					<view class="font-size-sm text-color-assist">支付前出示可累计积分，会员码每30秒更新</view>
 				</view>
-				<!-- #ifdef MP-WEIXIN -->
-				<view class="d-flex just-content-center align-items-center">
-					<button type="primary" class="wepay-btn" hover-class="none">
-						<image src="/static/images/mine/wechat.png"></image>
-						<view>使用微信支付</view>
-					</button>
-				</view>
-				<!-- #endif -->
 			</view>
 			<!-- user box end -->
 		</view>

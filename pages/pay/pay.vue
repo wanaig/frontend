@@ -133,13 +133,6 @@
 						<view class="iconfont line-height-100 checkbox" :class="payMode === 'balance' ? 'iconradio-button-on text-color-primary' : 'iconradio-button-off text-color-base'"></view>
 					</view>
 				</list-cell>
-				<!-- <list-cell last @click="selectPayMode('wechat')">
-					<view class="d-flex align-items-center justify-content-between w-100">
-						<view class="iconfont iconwxpay line-height-100 payment-icon" style="color: #7EB73A;"></view>
-						<view class="flex-fill">微信支付</view>
-						<view class="iconfont line-height-100 checkbox" :class="payMode === 'wechat' ? 'iconradio-button-on text-color-primary' : 'iconradio-button-off text-color-base'"></view>
-					</view>
-				</list-cell> -->
 			</view>
 			<!-- 支付方式 end -->
 			<!-- 备注 begin -->
@@ -214,7 +207,7 @@
 				return this.amount
 			},
 			amount() {
-				return this.cart.reduce((acc, cur) => acc + cur.number * cur.price, 0)
+				return parseFloat(this.cart.reduce((acc, cur) => acc + cur.number * cur.price, 0).toFixed(2))
 			},
 			balanceEnough() {
 				return this.member?.balance >= this.amount
@@ -226,7 +219,7 @@
 			// 使用异步读取避免阻塞 UI 渲染
 			this.cart = uni.getStorageSync('cart') || []
 			console.log('[支付页] 购物车数据:', JSON.stringify(this.cart))
-			console.log('[支付页] 计算金额:', this.cart.reduce((acc, cur) => acc + cur.number * cur.price, 0))
+			console.log('[支付页] 计算金额:', parseFloat(this.cart.reduce((acc, cur) => acc + cur.number * cur.price, 0).toFixed(2)))
 
 			remark && this.$set(this.form, 'remark', remark)
 
@@ -315,8 +308,7 @@
 					}
 
 					// 调用支付接口
-					const payMode = this.payMode === 'balance' ? '余额支付' : '微信支付'
-					await putApi('order.pay', orderId, { payMode })
+					await putApi('order.pay', orderId, { payMode: '余额支付' })
 
 					uni.hideLoading()
 					this.isCreating = false

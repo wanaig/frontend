@@ -29,15 +29,14 @@
 					</view>
 				</view>
 			</list-cell>
-			<list-cell :hover="false" :arrow="!member.birthday">
+			<list-cell :hover="false">
 				<view class="form-input w-100 d-flex align-items-center">
 					<view class="label">生日</view>
-					<view class="input flex-fill">
-						<picker mode="date" :value="date" :start="startDate" :end="endDate" v-if="!member.birthday" @change="handleDateChange">
-							生日当天有惊喜
-						</picker>
-						<input type="text" v-else :value="member.birthday" disabled>
-					</view>
+					<picker class="flex-fill" mode="date" :value="member.birthday || date" :start="startDate" :end="endDate" @change="handleDateChange">
+						<view :class="member.birthday ? '' : 'text-color-assist'">
+							{{ member.birthday || '生日当天有惊喜' }}
+						</view>
+					</picker>
 				</view>
 			</list-cell>
 			<list-cell :hover="false" last>
@@ -134,10 +133,7 @@
 				const year = date.getFullYear()
 				const month = String(date.getMonth() + 1).padStart(2, '0')
 				const day = String(date.getDate()).padStart(2, '0')
-				const hour = String(date.getHours()).padStart(2, '0')
-				const minute = String(date.getMinutes()).padStart(2, '0')
-				const second = String(date.getSeconds()).padStart(2, '0')
-				return `${year}-${month}-${day} ${hour}:${minute}:${second}`
+				return `${year}-${month}-${day}`
 			},
 
 			getDate(type) {

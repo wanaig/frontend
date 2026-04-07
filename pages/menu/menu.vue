@@ -290,7 +290,7 @@ export default {
 			return this.cart.reduce((acc, cur) => acc + cur.number, 0)
 		},
 		getCartGoodsPrice() {	//计算购物车总价
-			return this.cart.reduce((acc, cur) => acc + cur.number * cur.price, 0)
+			return parseFloat(this.cart.reduce((acc, cur) => acc + cur.number * cur.price, 0).toFixed(2))
 		},
 		disabledPay() { //是否达到起送价
 			return this.orderType == 'takeout' && (this.getCartGoodsPrice < this.store.min_price) ? true : false
@@ -487,7 +487,7 @@ export default {
 				})
 			}
 			console.log('[菜单页] 添加到购物车:', JSON.stringify(this.cart))
-			console.log('[菜单页] 购物车总金额:', this.cart.reduce((acc, cur) => acc + cur.number * cur.price, 0))
+			console.log('[菜单页] 购物车总金额:', parseFloat(this.cart.reduce((acc, cur) => acc + cur.number * cur.price, 0).toFixed(2)))
 		},
 		handleReduceFromCart(item, good) {
 			const index = this.cart.findIndex(item => item.id === good.id)
